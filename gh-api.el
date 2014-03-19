@@ -23,7 +23,7 @@
 (require 'json)
 
 (defvar my-token
-  (make-oauth2-token :access-token ""))
+  (make-oauth2-token :access-token "GITHUB TOKEN HERE"))
 
 (defvar user-data
   (with-current-buffer
@@ -51,3 +51,60 @@
 
 (cdr (assoc 'content (elt (assoc 'files gist-content) 1))) ;gist content
 
+(defun gh-api-authenticate (token)
+  "Authenticate GitHub user."
+  (interactive "sGitHub token: ")
+  (gh-api-save-token token "~/.gh-api")
+  (message "%s" token)
+  )
+
+(defun gh-api-save-token (token gh-api-token-file)
+  "Save token to file."
+  (with-temp-buffer
+    (insert token)
+    (when (file-writable-p gh-api-token-file)
+      (write-region (point-min)
+		    (point-max)
+		    gh-api-token-file))))
+
+
+(defun gh-api-read-token-file (gh-api-token-file)
+  "Read token from file."
+  (with-temp-buffer
+    (insert-file-contents gh-api-token-file)
+    (buffer-string)))
+
+(gh-api-read-token-file "~/.gh-api")
+
+
+(defun gh-api-json (gh-api-url)
+  "Get JSON object"
+  (with-current-buffer (url-retrieve-synchronously gh-api-url)
+    (goto-char (+ 1 url-http-end-of-headers))
+    (json-read)))
+
+
+;;;###autoload
+(defun gh-api-check-token ()
+  "Check existing GitHub token."
+  (if (file-exists-p "~/.gh-api")
+      (progn (let* ((token (gh-api-read-token-file "~/.gh-api"))
+		    (my-token (make-oauth2-token :access-token token)))
+
+
+	       (setq user-data
+	       	     (with-current-buffer
+	       		 (oauth2-url-retrieve-synchronously
+	       		  my-token "https://api.github.com/user")
+	       	       (goto-char url-http-end-of-headers)
+	       	       (json-read)))
+	       
+	       (setq gist-url (replace-regexp-in-string "{/gist_id}" "" (cdr (assoc 'gists_url user-data))))
+	       (setq gist-object (gh-api-json gist-url))
+	       (cdr (assoc 'content (elt (assoc 'files gist-object) 1))) ;gist content
+	       );let
+
+	     )
+    (gh-api-authenticate)))
+
+(gh-api-check-token)
