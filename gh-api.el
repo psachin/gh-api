@@ -21,35 +21,36 @@
 
 (require 'oauth2)
 (require 'json)
+(require 'url)
 
-(defvar my-token
-  (make-oauth2-token :access-token "GITHUB TOKEN HERE"))
+;; (defvar my-token
+;;   (make-oauth2-token :access-token "GITHUB TOKEN HERE"))
 
-(defvar user-data
-  (with-current-buffer
-      (oauth2-url-retrieve-synchronously my-token "https://api.github.com/user")
-    (goto-char url-http-end-of-headers)
-    (json-read)))
+;; (defvar user-data
+;;   (with-current-buffer
+;;       (oauth2-url-retrieve-synchronously my-token "https://api.github.com/user")
+;;     (goto-char url-http-end-of-headers)
+;;     (json-read)))
 
-(replace-regexp-in-string "{/gist_id}" "" (cdr (assoc 'gists_url user-data)))
+;; (replace-regexp-in-string "{/gist_id}" "" (cdr (assoc 'gists_url user-data)))
 
 
 ;; Working
-(defvar sachin-data
-  (with-current-buffer (url-retrieve-synchronously "https://api.github.com/users/psachin/gists")
-    (goto-char (+ 1 url-http-end-of-headers))
-    (json-read)))
+;; (defvar sachin-data
+;;   (with-current-buffer (url-retrieve-synchronously "https://api.github.com/users/psachin/gists")
+;;     (goto-char (+ 1 url-http-end-of-headers))
+;;     (json-read)))
 
 
-(cdr (assoc 'url (elt sachin-data 0)))	;gist url
+;; (cdr (assoc 'url (elt sachin-data 0)))	;gist url
 
-(defvar gist-content
-  (with-current-buffer (url-retrieve-synchronously (cdr (assoc 'url (elt sachin-data 0))))
-    (goto-char (+ 1 url-http-end-of-headers))
-    (json-read)))
+;; (defvar gist-content
+;;   (with-current-buffer (url-retrieve-synchronously (cdr (assoc 'url (elt sachin-data 0))))
+;;     (goto-char (+ 1 url-http-end-of-headers))
+;;     (json-read)))
 
 
-(cdr (assoc 'content (elt (assoc 'files gist-content) 1))) ;gist content
+;; (cdr (assoc 'content (elt (assoc 'files gist-content) 1))) ;gist content
 
 (defun gh-api-authenticate (token)
   "Authenticate GitHub user."
@@ -74,7 +75,7 @@
     (insert-file-contents gh-api-token-file)
     (buffer-string)))
 
-(gh-api-read-token-file "~/.gh-api")
+;; (gh-api-read-token-file "~/.gh-api")
 
 
 (defun gh-api-json (gh-api-url)
@@ -82,6 +83,10 @@
   (with-current-buffer (url-retrieve-synchronously gh-api-url)
     (goto-char (+ 1 url-http-end-of-headers))
     (json-read)))
+
+
+;;(setq gist-obj (gh-api-json "https://api.github.com/users/psachin/gists"))
+
 
 
 ;;;###autoload
@@ -100,11 +105,17 @@
 	       	       (json-read)))
 	       
 	       (setq gist-url (replace-regexp-in-string "{/gist_id}" "" (cdr (assoc 'gists_url user-data))))
-	       (setq gist-object (gh-api-json gist-url))
-	       (cdr (assoc 'content (elt (assoc 'files gist-object) 1))) ;gist content
-	       );let
+	       (message "%s" gist-url)
 
+	       (setq gist-obj (gh-api-json gist-url))
+	       ;; (setq gist (gh-api-json (cdr (assoc 'url (elt gist-obj 0)))))
+	       ;; (setq gh-files (assoc 'files gist))
+	       ;; (setq gh-content (assoc 'content (elt gh-files 1)))
+	       
+	       );let
 	     )
     (gh-api-authenticate)))
 
 (gh-api-check-token)
+
+
